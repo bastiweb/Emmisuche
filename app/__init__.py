@@ -1,0 +1,2 @@
+"""Recipe search application package."""
+

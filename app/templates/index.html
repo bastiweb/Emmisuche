@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="search-hero">
+    <h1>Rezepte schnell finden</h1>
+    <p>
+      Lokaler Index für emmikochteinfach.de.
+      {% if total_recipes %}
+        Aktuell indexiert: <strong>{{ total_recipes }}</strong> Rezepte.
+        {% if last_indexed_at %}
+          Letzter Indexlauf: <strong>{{ last_indexed_at }}</strong>.
+        {% endif %}
+      {% endif %}
+    </p>
+    <form method="get" action="/" class="search-form">
+      <input
+        type="search"
+        name="q"
+        value="{{ query }}"
+        placeholder="Suche nach Titel, Zutat oder Begriff (z. B. Paprika, Lachs, Pasta)"
+        aria-label="Suche"
+        required
+      />
+      <button type="submit">Suchen</button>
+    </form>
+  </section>
+
+  {% if query %}
+    <section class="results">
+      <h2>Suchergebnisse</h2>
+      {% if pagination.total == 0 %}
+        <p>Keine Treffer für "{{ query }}".</p>
+      {% else %}
+        <p class="result-count">{{ pagination.total }} Treffer</p>
+        <ul class="result-list">
+          {% for item in results %}
+            <li class="result-card">
+              {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
+              {% endif %}
+              <div>
+                <h3><a href="/recipes/{{ item.id }}">{{ item.title }}</a></h3>
+                {% if item.is_stale %}
+                  <p class="stale-tag">Potentiell veraltet</p>
+                {% endif %}
+                <p>{{ item.snippet | safe }}</p>
+                <p class="source">
+                  Quelle:
+                  <a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">
+                    {{ item.source_url }}
+                  </a>
+                </p>
+                {% if item.last_indexed_at %}
+                  <p class="source">Zuletzt indexiert: {{ item.last_indexed_at }}</p>
+                {% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if pagination.total_pages > 1 %}
+        <nav class="pagination">
+          {% if pagination.has_prev %}
+            <a href="/?q={{ query | urlencode }}&page={{ pagination.page - 1 }}">Zurück</a>
+          {% endif %}
+          <span>Seite {{ pagination.page }} von {{ pagination.total_pages }}</span>
+          {% if pagination.has_next %}
+            <a href="/?q={{ query | urlencode }}&page={{ pagination.page + 1 }}">Weiter</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+    </section>
+  {% else %}
+    <section class="recent">
+      <h2>Zuletzt indexiert</h2>
+      {% if recent_recipes %}
+        <ul class="recent-list">
+          {% for item in recent_recipes %}
+            <li>
+              <a href="/recipes/{{ item.id }}">{{ item.title }}</a>
+              {% if item.is_stale %}
+                <span class="stale-inline"> (veraltet)</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>Noch keine Rezepte indexiert. Starte zuerst den Crawl.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+{% endblock %}

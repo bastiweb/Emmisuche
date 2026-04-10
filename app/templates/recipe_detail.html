@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <article class="recipe-detail">
+    <p><a href="/" class="back-link">Zur Suche</a></p>
+    <h1>{{ recipe.title }}</h1>
+
+    {% if recipe.image_url %}
+      <img class="hero-image" src="{{ recipe.image_url }}" alt="{{ recipe.title }}" />
+    {% endif %}
+
+    {% if recipe.intro %}
+      <p class="intro">{{ recipe.intro }}</p>
+    {% endif %}
+
+    {% if recipe.last_indexed_at %}
+      <p class="source">Zuletzt indexiert: {{ recipe.last_indexed_at }}</p>
+    {% endif %}
+    {% if recipe.is_stale %}
+      <p class="stale-tag">Hinweis: Dieser Eintrag kann veraltet sein.</p>
+    {% endif %}
+
+    <section class="meta-grid">
+      {% if recipe.published_date %}<div><strong>Veröffentlicht:</strong> {{ recipe.published_date }}</div>{% endif %}
+      {% if recipe.prep_time %}<div><strong>Vorbereitung:</strong> {{ recipe.prep_time }}</div>{% endif %}
+      {% if recipe.cook_time %}<div><strong>Kochzeit:</strong> {{ recipe.cook_time }}</div>{% endif %}
+      {% if recipe.total_time %}<div><strong>Gesamtzeit:</strong> {{ recipe.total_time }}</div>{% endif %}
+      {% if recipe.servings %}<div><strong>Portionen:</strong> {{ recipe.servings }}</div>{% endif %}
+    </section>
+
+    {% if recipe.categories %}
+      <section>
+        <h2>Kategorien</h2>
+        <p>{{ recipe.categories | join(", ") }}</p>
+      </section>
+    {% endif %}
+
+    {% if recipe.ingredients %}
+      <section>
+        <h2>Zutaten</h2>
+        <ul>
+          {% for item in recipe.ingredients %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if recipe.instructions %}
+      <section>
+        <h2>Zubereitung</h2>
+        <ol>
+          {% for step in recipe.instructions %}
+            <li>{{ step }}</li>
+          {% endfor %}
+        </ol>
+      </section>
+    {% endif %}
+
+    {% if recipe.nutrition_summary %}
+      <section>
+        <h2>Nährwerte</h2>
+        <p>{{ recipe.nutrition_summary }}</p>
+      </section>
+    {% endif %}
+
+    <section>
+      <h2>Quelle</h2>
+      <p>
+        <a href="{{ recipe.source_url }}" target="_blank" rel="noopener noreferrer">
+          {{ recipe.source_url }}
+        </a>
+      </p>
+    </section>
+  </article>
+{% endblock %}
