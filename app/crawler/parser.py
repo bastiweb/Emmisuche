@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import html as html_lib
 import re
 from dataclasses import dataclass
 from typing import Any, Iterable
@@ -124,8 +125,21 @@ def _clean_text(value: Any) -> str:
         return ""
     if isinstance(value, (list, tuple)):
         return " ".join(_clean_text(part) for part in value if _clean_text(part))
+
     text = str(value)
+
+    # HTML-Entities dekodieren, z. B. &nbsp; -> \xa0
+    text = html_lib.unescape(text)
+
+    # geschützte Leerzeichen in normale Leerzeichen umwandeln
+    text = text.replace("\xa0", " ")
+
+    # Mehrfach-Whitespace zusammenfassen
     text = re.sub(r"\s+", " ", text)
+
+    # Leerzeichen vor Satzzeichen entfernen
+    text = re.sub(r"\s+([,.;:!?])", r"\1", text)
+
     return text.strip()
 
 

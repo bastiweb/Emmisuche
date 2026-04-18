@@ -9,10 +9,7 @@
         Aktuell indexiert: <strong>{{ total_recipes }}</strong> Rezepte.
         Favoriten: <strong>{{ total_favorites }}</strong>.
         <a href="/favorites">Zu den Favoriten</a>.
-      {% endif %}
-      {% if last_indexed_at %}
-        Letzter Index-Lauf: <strong>{{ last_indexed_at }}</strong>.
-      {% endif %}
+      {% endif %}      
     </p>
     <form method="get" action="/" class="search-form">
       <input
