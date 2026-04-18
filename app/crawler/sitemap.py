@@ -99,10 +99,13 @@ def discover_sitemap_urls(
     include_url_keywords: list[str],
     fetch_text,
     logger: logging.Logger,
+    metrics: dict[str, int] | None = None,
 ) -> list[SitemapUrlEntry]:
     visited_sitemaps: set[str] = set()
     queued = deque([sitemap_index_url])
     discovered: dict[str, SitemapUrlEntry] = {}
+    total_url_entries = 0
+    duplicate_urls = 0
 
     while queued:
         current_sitemap = queued.popleft().strip()
@@ -130,6 +133,8 @@ def discover_sitemap_urls(
             logger.warning("Invalid XML sitemap %s: %s", current_sitemap, exc)
             continue
 
+        total_url_entries += len(page_urls)
+
         for nested in nested_sitemaps:
             if nested not in visited_sitemaps:
                 queued.append(nested)
@@ -146,7 +151,17 @@ def discover_sitemap_urls(
                 continue
 
             existing = discovered.get(entry.url)
-            if existing is None or (entry.lastmod and not existing.lastmod):
+            if existing is None:
                 discovered[entry.url] = entry
+            else:
+                duplicate_urls += 1
+                if entry.lastmod and not existing.lastmod:
+                    discovered[entry.url] = entry
+
+    if metrics is not None:
+        metrics["discovered_sitemaps"] = len(visited_sitemaps)
+        metrics["discovered_url_entries"] = total_url_entries
+        metrics["candidate_urls"] = len(discovered)
+        metrics["duplicate_urls"] = duplicate_urls
 
     return list(discovered.values())

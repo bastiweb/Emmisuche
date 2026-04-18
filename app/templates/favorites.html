@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="favorites-page">
+    <header class="page-header">
+      <h1>Favoriten</h1>
+      <p class="source">
+        {{ favorites_count }} gespeicherte Rezepte mit persönlichen Notizen.
+      </p>
+    </header>
+    {% if favorites %}
+      <ul class="result-list favorites-list">
+        {% for item in favorites %}
+          <li class="result-card favorite-card">
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
+            {% endif %}
+            <div class="favorite-card-body">
+              <h3><a href="/recipes/{{ item.id }}">{{ item.title }}</a></h3>
+              {% if item.is_stale %}
+                <p class="stale-tag">Potentiell veraltet</p>
+              {% endif %}
+              <p class="source">
+                Quelle:
+                <a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">
+                  {{ item.source_url }}
+                </a>
+              </p>
+
+              <form method="post" action="/recipes/{{ item.id }}/favorite-note" class="note-form compact-note-form">
+                <input type="hidden" name="next" value="/favorites" />
+                <label for="favorite-note-{{ item.id }}"><strong>Persönliche Notiz</strong></label>
+                <textarea
+                  id="favorite-note-{{ item.id }}"
+                  name="note"
+                  rows="3"
+                  placeholder="z. B. Salz reduzieren, 3 Minuten länger garen..."
+                >{{ item.note or "" }}</textarea>
+                <div class="favorite-actions">
+                  <button type="submit">Notiz speichern</button>
+                  <a href="/recipes/{{ item.id }}" class="text-link">Rezept öffnen</a>
+                </div>
+              </form>
+
+              <form method="post" action="/recipes/{{ item.id }}/favorite" class="inline-form">
+                <input type="hidden" name="action" value="remove" />
+                <input type="hidden" name="next" value="/favorites" />
+                <button type="submit" class="ghost-button">Aus Favoriten entfernen</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Noch keine Favoriten gespeichert.</p>
+    {% endif %}
+  </section>
+{% endblock %}

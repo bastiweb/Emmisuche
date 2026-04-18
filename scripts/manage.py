@@ -35,11 +35,16 @@ def run_index(mode: str, limit: int | None = None, stale_days: int | None = None
     print("Indexing complete")
     print("----------------")
     print(f"Mode            : {mode}")
+    print(f"Sitemaps        : {stats.discovered_sitemaps}")
+    print(f"Sitemap URLs    : {stats.discovered_url_entries}")
+    print(f"Candidate URLs  : {stats.candidate_urls}")
+    print(f"Duplicate URLs  : {stats.duplicate_urls}")
     print(f"Discovered URLs : {stats.discovered_urls}")
     print(f"Scheduled URLs  : {stats.scheduled_urls}")
     print(f"Crawled URLs    : {stats.crawled_urls}")
     print(f"Indexed recipes : {stats.indexed_recipes}")
     print(f"Skipped existing: {stats.skipped_existing}")
+    print(f"Skipped unchanged: {stats.skipped_unchanged}")
     print(f"Skipped nonrecipe: {stats.skipped_non_recipe}")
     print(f"Skipped robots  : {stats.skipped_disallowed}")
     print(f"Failures        : {stats.failures}")
@@ -60,11 +65,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Initialize or migrate the SQLite database schema.",
     )
 
+    subparsers.add_parser(
+        "index-status",
+        help="Show crawl/index diagnostics from local cache tables.",
+    )
+
     crawl_parser = subparsers.add_parser(
         "crawl",
         help="Initial crawl: index missing pages only.",
     )
     crawl_parser.add_argument("--limit", type=int, default=None, help="Limit URLs to crawl.")
+
+    initial_full_parser = subparsers.add_parser(
+        "index-full",
+        help="Alias for initial full indexing run (missing URLs only).",
+    )
+    initial_full_parser.add_argument(
+        "--limit", type=int, default=None, help="Limit URLs to crawl."
+    )
 
     reindex_parser = subparsers.add_parser(
         "reindex",
@@ -83,6 +101,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Re-crawl and upsert every discovered candidate page.",
     )
     reindex_all_parser.add_argument(
+        "--limit", type=int, default=None, help="Limit URLs to crawl."
+    )
+
+    rebuild_parser = subparsers.add_parser(
+        "rebuild-index",
+        help="Force full refresh of all candidates (same behavior as reindex-all).",
+    )
+    rebuild_parser.add_argument(
         "--limit", type=int, default=None, help="Limit URLs to crawl."
     )
 
@@ -114,11 +140,31 @@ def main() -> int:
             extra={"event": "db.initialized", "database_path": str(settings.database_path)},
         )
         return 0
+    if args.command == "index-status":
+        diagnostics = RecipeRepository(
+            settings.database_path, stale_days=settings.crawler_stale_days
+        ).get_index_diagnostics()
+        print("")
+        print("Index diagnostics")
+        print("-----------------")
+        print(f"Total recipes    : {diagnostics['total_recipes']}")
+        print(f"Total favorites  : {diagnostics['total_favorites']}")
+        print(f"Crawl state rows : {diagnostics['total_crawl_state']}")
+        print(f"Last indexed at  : {diagnostics['last_indexed_at']}")
+        print(f"Stale recipes    : {diagnostics['stale_recipes']}")
+        print("Status breakdown :")
+        for status, count in diagnostics["status_breakdown"].items():
+            print(f"  - {status}: {count}")
+        return 0
     if args.command == "crawl":
+        return run_index(mode="initial", limit=args.limit)
+    if args.command == "index-full":
         return run_index(mode="initial", limit=args.limit)
     if args.command == "reindex":
         return run_index(mode="reindex", limit=args.limit, stale_days=args.stale_days)
     if args.command == "reindex-all":
+        return run_index(mode="reindex-all", limit=args.limit)
+    if args.command == "rebuild-index":
         return run_index(mode="reindex-all", limit=args.limit)
     if args.command == "update-stale":
         return run_index(

@@ -7,9 +7,11 @@
       Lokaler Index für emmikochteinfach.de.
       {% if total_recipes %}
         Aktuell indexiert: <strong>{{ total_recipes }}</strong> Rezepte.
-        {% if last_indexed_at %}
-          Letzter Indexlauf: <strong>{{ last_indexed_at }}</strong>.
-        {% endif %}
+        Favoriten: <strong>{{ total_favorites }}</strong>.
+        <a href="/favorites">Zu den Favoriten</a>.
+      {% endif %}
+      {% if last_indexed_at %}
+        Letzter Index-Lauf: <strong>{{ last_indexed_at }}</strong>.
       {% endif %}
     </p>
     <form method="get" action="/" class="search-form">
@@ -50,9 +52,6 @@
                     {{ item.source_url }}
                   </a>
                 </p>
-                {% if item.last_indexed_at %}
-                  <p class="source">Zuletzt indexiert: {{ item.last_indexed_at }}</p>
-                {% endif %}
               </div>
             </li>
           {% endfor %}

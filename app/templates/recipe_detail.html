@@ -20,6 +20,29 @@
       <p class="stale-tag">Hinweis: Dieser Eintrag kann veraltet sein.</p>
     {% endif %}
 
+    <section class="favorite-box">
+      {% if recipe.is_favorite %}
+        <form method="post" action="/recipes/{{ recipe.id }}/favorite">
+          <input type="hidden" name="action" value="remove" />
+          <input type="hidden" name="next" value="/recipes/{{ recipe.id }}" />
+          <button type="submit">Aus Favoriten entfernen</button>
+        </form>
+      {% else %}
+        <form method="post" action="/recipes/{{ recipe.id }}/favorite">
+          <input type="hidden" name="action" value="add" />
+          <input type="hidden" name="next" value="/recipes/{{ recipe.id }}" />
+          <button type="submit">Zu Favoriten hinzufügen</button>
+        </form>
+      {% endif %}
+
+      <form method="post" action="/recipes/{{ recipe.id }}/favorite-note" class="note-form">
+        <input type="hidden" name="next" value="/recipes/{{ recipe.id }}" />
+        <label for="favorite-note"><strong>Persönliche Notiz</strong></label>
+        <textarea id="favorite-note" name="note" rows="4" placeholder="z. B. mehr Knoblauch, 5 Min länger köcheln...">{{ recipe.favorite_note or "" }}</textarea>
+        <button type="submit">Notiz speichern</button>
+      </form>
+    </section>
+
     <section class="meta-grid">
       {% if recipe.published_date %}<div><strong>Veröffentlicht:</strong> {{ recipe.published_date }}</div>{% endif %}
       {% if recipe.prep_time %}<div><strong>Vorbereitung:</strong> {{ recipe.prep_time }}</div>{% endif %}

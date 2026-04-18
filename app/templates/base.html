@@ -7,9 +7,15 @@
     <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}" />
   </head>
   <body>
+    {% set current_path = request.url.path if request is defined else "/" %}
     <header class="site-header">
       <div class="container">
-        <a href="/" class="brand">Emmi Recipe Search</a>
+        <a href="/" class="brand">Emmi kocht einfach Suche</a>
+        <nav class="top-nav">
+          <a href="/" class="{% if current_path == '/' %}is-active{% endif %}">Suche</a>
+          <a href="/favorites" class="{% if current_path.startswith('/favorites') %}is-active{% endif %}">Favoriten</a>
+          <a href="/admin" class="{% if current_path.startswith('/admin') %}is-active{% endif %}">Index-Status</a>
+        </nav>
       </div>
     </header>
     <main class="container">
@@ -17,4 +23,3 @@
     </main>
   </body>
 </html>
-

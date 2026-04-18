@@ -30,6 +30,35 @@ CREATE TABLE IF NOT EXISTS recipes (
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
+CREATE TABLE IF NOT EXISTS crawl_state (
+    source_url TEXT PRIMARY KEY,
+    canonical_url TEXT NOT NULL,
+    sitemap_url TEXT,
+    sitemap_lastmod TEXT,
+    last_fetched_at TEXT,
+    last_parsed_at TEXT,
+    content_hash TEXT,
+    index_status TEXT NOT NULL DEFAULT 'new',
+    last_error TEXT,
+    fetch_count INTEGER NOT NULL DEFAULT 0,
+    parse_count INTEGER NOT NULL DEFAULT 0,
+    skip_count INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_crawl_state_status ON crawl_state(index_status);
+
+CREATE TABLE IF NOT EXISTS favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    recipe_id INTEGER NOT NULL UNIQUE,
+    note TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    FOREIGN KEY(recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_favorites_recipe_id ON favorites(recipe_id);
+
 CREATE VIRTUAL TABLE IF NOT EXISTS recipes_fts USING fts5(
     title,
     intro,
@@ -114,6 +143,36 @@ def _run_migrations(connection: sqlite3.Connection) -> None:
             WHERE last_indexed_at IS NULL
             """
         )
+
+    # Backfill crawl_state from already indexed recipe rows to avoid full refetches.
+    connection.execute(
+        """
+        INSERT INTO crawl_state (
+            source_url,
+            canonical_url,
+            sitemap_lastmod,
+            last_fetched_at,
+            last_parsed_at,
+            index_status,
+            fetch_count,
+            parse_count,
+            updated_at
+        )
+        SELECT
+            r.source_url,
+            r.source_url,
+            r.last_sitemap_mod,
+            r.last_crawled_at,
+            r.last_indexed_at,
+            'indexed',
+            CASE WHEN r.last_crawled_at IS NULL THEN 0 ELSE 1 END,
+            CASE WHEN r.last_indexed_at IS NULL THEN 0 ELSE 1 END,
+            COALESCE(r.last_indexed_at, r.last_crawled_at, r.updated_at, r.created_at)
+        FROM recipes r
+        LEFT JOIN crawl_state c ON c.source_url = r.source_url
+        WHERE c.source_url IS NULL
+        """
+    )
 
 
 def get_connection(database_path: Path) -> sqlite3.Connection:

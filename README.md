@@ -1,4 +1,4 @@
-# Emmi Recipe Search (Local, Dockerized)
+# Emmi kocht einfach Suche (Local, Dockerized)
 
 Dockerized FastAPI web app that crawls public recipe pages from `emmikochteinfach.de`, indexes extracted recipe data into SQLite (FTS5), and provides a searchable local UI with recipe detail pages and source attribution.
 
@@ -21,6 +21,7 @@ Dockerized FastAPI web app that crawls public recipe pages from `emmikochteinfac
 - CLI utilities for initial crawl, incremental reindex, and full reindex
 - Structured JSON logging for crawl/parse/index/search operations
 - One-command Docker startup with optional automatic reindex on boot
+- Local favorites with personal notes/comments (stored separately from scraped data)
 - Tests for parser, search ranking behavior, and fixture integration flow
 
 ## Stack
@@ -124,6 +125,22 @@ FTS table: `recipes_fts`
   - `title`, `intro`, `categories_text`, `ingredients_text`, `instructions_text`, `searchable_text`
 - trigger-based sync on insert/update/delete
 
+Operational cache table: `crawl_state`
+
+- stores per-URL crawl/index metadata:
+  - `source_url`, `canonical_url`, `sitemap_url`, `sitemap_lastmod`
+  - `last_fetched_at`, `last_parsed_at`
+  - `content_hash` (change detection)
+  - `index_status`, `last_error`
+  - fetch/parse/skip counters for diagnostics
+
+User table: `favorites`
+
+- stores local user data separately from scraped content:
+  - `recipe_id` (FK to `recipes`)
+  - optional `note`/comment
+  - timestamps
+
 ## Configuration
 
 Copy env template:
@@ -159,7 +176,7 @@ python scripts/manage.py crawl --limit 100
 uvicorn app.main:app --reload
 ```
 
-Open: [http://localhost:8000](http://localhost:8000)
+Open: [http://localhost:8910](http://localhost:8910)
 
 ## Docker Run
 
@@ -170,7 +187,7 @@ docker compose up -d --build
 
 `docker compose up -d --build` starts the app and (by default) runs a startup reindex with `AUTO_REINDEX_LIMIT`.
 
-Open: [http://localhost:8000](http://localhost:8000)
+Open: [http://localhost:8910](http://localhost:8910)
 
 ## CLI Utilities
 
@@ -180,16 +197,34 @@ Initial crawl (missing only):
 python scripts/manage.py crawl
 ```
 
-Reindex all discovered candidates:
+Initial full indexing alias:
+
+```bash
+python scripts/manage.py index-full
+```
+
+Reindex stale/missing/changed:
 
 ```bash
 python scripts/manage.py reindex
 ```
 
-Force full reindex:
+Force full refresh:
 
 ```bash
 python scripts/manage.py reindex-all
+```
+
+Force full rebuild alias:
+
+```bash
+python scripts/manage.py rebuild-index
+```
+
+Diagnostics:
+
+```bash
+python scripts/manage.py index-status
 ```
 
 Optional flags:
@@ -204,6 +239,13 @@ Optional flags:
 - Search spans title/intro/categories/ingredients/instructions/searchable text
 - Ranking uses weighted `bm25` with priority: title > ingredients > instructions > general body text
 - Results include snippet, optional image, and source URL
+
+## Favorites and Notes
+
+- Favorite/unfavorite from recipe detail pages
+- Separate favorites page: `/favorites`
+- Optional personal note per favorite recipe
+- Notes are stored in `favorites.note` and are never mixed into scraped recipe source fields
 
 ## Testing
 

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="admin-status-page">
+    <header class="page-header">
+      <h1>Index-Diagnose</h1>
+      <p class="source">
+        Übersicht über Crawl-Status, Vollständigkeit und aktuelle Fehler.
+      </p>
+      <p class="source">
+        JSON-Ansicht:
+        <a href="/admin/index-status">/admin/index-status</a>
+      </p>
+    </header>
+
+    <div class="diag-grid">
+      <article class="diag-card">
+        <h2>Rezepte im Index</h2>
+        <p class="diag-value">{{ diagnostics.total_recipes }}</p>
+        <p class="source">{{ diagnostics.coverage_percent }}% der bekannten Kandidaten als "indexed".</p>
+      </article>
+      <article class="diag-card">
+        <h2>Bekannte URLs</h2>
+        <p class="diag-value">{{ diagnostics.total_crawl_state }}</p>
+        <p class="source">Alle URLs mit persistiertem Crawl-Status.</p>
+      </article>
+      <article class="diag-card">
+        <h2>Veraltete Rezepte</h2>
+        <p class="diag-value">{{ diagnostics.stale_recipes }}</p>
+        <p class="source">Gemäß `CRAWLER_STALE_DAYS` als stale markiert.</p>
+      </article>
+      <article class="diag-card">
+        <h2>Zuletzt indexiert</h2>
+        <p class="diag-value diag-value-sm">{{ diagnostics.last_indexed_at or "noch nie" }}</p>
+      </article>
+    </div>
+
+    <section class="diag-section">
+      <h2>Status-Verteilung</h2>
+      <table class="diag-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Anzahl</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if diagnostics.status_breakdown %}
+            {% for status, count in diagnostics.status_breakdown.items() %}
+              <tr>
+                <td><code>{{ status }}</code></td>
+                <td>{{ count }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="2">Noch keine Crawl-Daten vorhanden.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="diag-section">
+      <h2>Integritäts-Checks</h2>
+      <ul class="diag-list">
+        <li>Indexed-Status ohne Rezeptdatensatz: <strong>{{ diagnostics.indexed_without_recipe_total }}</strong></li>
+        <li>Rezeptdatensatz ohne Crawl-State: <strong>{{ diagnostics.recipe_without_state_total }}</strong></li>
+        <li>Fetch-Fehler: <strong>{{ diagnostics.fetch_failed_state_total }}</strong></li>
+        <li>Parse-Fehler: <strong>{{ diagnostics.parse_failed_state_total }}</strong></li>
+        <li>Pending (`new`): <strong>{{ diagnostics.pending_state_total }}</strong></li>
+      </ul>
+    </section>
+
+    <section class="diag-section">
+      <h2>Letzte Fehler</h2>
+      {% if diagnostics.recent_failures %}
+        <ul class="diag-failures">
+          {% for failure in diagnostics.recent_failures %}
+            <li>
+              <p><strong>{{ failure.index_status }}</strong> · {{ failure.updated_at }}</p>
+              <p class="source"><a href="{{ failure.source_url }}" target="_blank" rel="noopener noreferrer">{{ failure.source_url }}</a></p>
+              {% if failure.last_error %}
+                <p>{{ failure.last_error }}</p>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>Keine aktuellen Crawl- oder Parse-Fehler.</p>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}
+

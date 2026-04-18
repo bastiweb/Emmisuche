@@ -44,6 +44,26 @@ a {
   color: var(--ink);
 }
 
+.site-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.top-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+}
+
+.top-nav a.is-active {
+  color: var(--ink);
+  background: #f2ebdf;
+}
+
 .search-hero {
   margin: 2rem 0 1.4rem;
   padding: 1.2rem 1.3rem;
@@ -89,6 +109,11 @@ a {
 
 .results h2,
 .recent h2 {
+  font-family: "Merriweather", Georgia, serif;
+}
+
+.page-header h1 {
+  margin-bottom: 0.25rem;
   font-family: "Merriweather", Georgia, serif;
 }
 
@@ -208,6 +233,165 @@ a {
   border-bottom: 1px solid var(--border);
   padding: 0.8rem 0;
   margin: 0.8rem 0;
+}
+
+.favorite-box {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: #fff9f3;
+  margin: 0.8rem 0;
+}
+
+.favorite-box form {
+  margin: 0.4rem 0;
+}
+
+.favorite-box button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  padding: 0 0.9rem;
+  cursor: pointer;
+}
+
+.favorite-box textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-family: inherit;
+  margin-top: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.favorites-list {
+  margin-top: 0.7rem;
+}
+
+.favorite-card {
+  align-items: start;
+}
+
+.favorite-card-body textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-family: inherit;
+  margin-top: 0.25rem;
+}
+
+.favorite-actions {
+  margin-top: 0.4rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.inline-form {
+  margin-top: 0.5rem;
+}
+
+.text-link {
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ghost-button {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 600;
+  padding: 0 0.8rem;
+  cursor: pointer;
+}
+
+.admin-status-page {
+  margin: 1.4rem 0 2rem;
+}
+
+.diag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+}
+
+.diag-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 0.8rem;
+}
+
+.diag-card h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+}
+
+.diag-value {
+  margin: 0.3rem 0;
+  font-size: 1.7rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.diag-value-sm {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.diag-section {
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 0.9rem;
+}
+
+.diag-section h2 {
+  margin-top: 0;
+  margin-bottom: 0.6rem;
+  font-size: 1.05rem;
+  font-family: "Merriweather", Georgia, serif;
+}
+
+.diag-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.diag-table th,
+.diag-table td {
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  padding: 0.45rem 0.3rem;
+}
+
+.diag-table th {
+  color: var(--muted);
+}
+
+.diag-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.diag-failures {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.diag-failures p {
+  margin: 0.15rem 0;
 }
 
 @media (max-width: 680px) {

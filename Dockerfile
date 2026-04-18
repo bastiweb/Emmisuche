@@ -17,6 +17,6 @@ COPY . .
 RUN mkdir -p /app/data
 RUN chmod +x /app/scripts/start.sh
 
-EXPOSE 8000
+EXPOSE 8910
 
 CMD ["/app/scripts/start.sh"]

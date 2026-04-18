@@ -31,6 +31,9 @@ class ParsedRecipe:
 
 @dataclass(slots=True)
 class IndexingStats:
+    discovered_sitemaps: int = 0
+    discovered_url_entries: int = 0
+    candidate_urls: int = 0
     discovered_urls: int = 0
     scheduled_urls: int = 0
     crawled_urls: int = 0
@@ -38,5 +41,6 @@ class IndexingStats:
     skipped_non_recipe: int = 0
     skipped_disallowed: int = 0
     skipped_existing: int = 0
+    skipped_unchanged: int = 0
+    duplicate_urls: int = 0
     failures: int = 0
-

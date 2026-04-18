@@ -55,6 +55,10 @@ class Settings:
     crawler_retry_status_codes: list[int]
     crawler_max_pages: int
     crawler_stale_days: int
+    crawler_min_fetch_interval_hours: float
+    crawler_failure_retry_hours: float
+    crawler_non_recipe_recheck_days: int
+    crawler_disallowed_recheck_days: int
     crawler_include_sitemap_keywords: list[str]
     crawler_include_url_keywords: list[str]
     crawler_allow_non_https: bool
@@ -68,7 +72,7 @@ def get_settings() -> Settings:
     default_db = project_root / "data" / "recipes.db"
 
     return Settings(
-        app_name=os.getenv("APP_NAME", "Emmi Recipe Search"),
+        app_name=os.getenv("APP_NAME", "Emmi kocht einfach Suche"),
         environment=os.getenv("APP_ENV", "development"),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         log_json=_parse_bool(os.getenv("LOG_JSON"), default=True),
@@ -104,9 +108,21 @@ def get_settings() -> Settings:
         ),
         crawler_max_pages=int(os.getenv("CRAWLER_MAX_PAGES", "0")),
         crawler_stale_days=int(os.getenv("CRAWLER_STALE_DAYS", "30")),
+        crawler_min_fetch_interval_hours=float(
+            os.getenv("CRAWLER_MIN_FETCH_INTERVAL_HOURS", "6")
+        ),
+        crawler_failure_retry_hours=float(
+            os.getenv("CRAWLER_FAILURE_RETRY_HOURS", "12")
+        ),
+        crawler_non_recipe_recheck_days=int(
+            os.getenv("CRAWLER_NON_RECIPE_RECHECK_DAYS", "90")
+        ),
+        crawler_disallowed_recheck_days=int(
+            os.getenv("CRAWLER_DISALLOWED_RECHECK_DAYS", "7")
+        ),
         crawler_include_sitemap_keywords=_parse_csv(
             os.getenv("CRAWLER_INCLUDE_SITEMAP_KEYWORDS"),
-            default=("post-sitemap", "recipe-sitemap"),
+            default=("post-sitemap", "page-sitemap", "recipe-sitemap"),
         ),
         crawler_include_url_keywords=_parse_csv(
             os.getenv("CRAWLER_INCLUDE_URL_KEYWORDS"), default=()
