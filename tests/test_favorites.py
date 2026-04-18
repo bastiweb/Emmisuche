@@ -45,3 +45,29 @@ def test_favorite_create_update_delete_and_note_persistence(temp_db_path: Path) 
     assert detail["is_favorite"] is False
     assert detail["favorite_note"] is None
 
+
+def test_update_note_creates_favorite_if_missing(temp_db_path: Path) -> None:
+    repo = RecipeRepository(temp_db_path)
+    repo.upsert_recipe(_recipe("https://example.com/rezept-b/", "Rezept B"))
+    recipe_id = int(repo.list_recent(limit=1)[0]["id"])
+
+    repo.update_favorite_note(recipe_id, "Beim nächsten Mal mit Chili")
+
+    detail = repo.get_recipe_by_id(recipe_id)
+    assert detail is not None
+    assert detail["is_favorite"] is True
+    assert detail["favorite_note"] == "Beim nächsten Mal mit Chili"
+
+
+def test_set_favorite_with_empty_note_keeps_existing_note(temp_db_path: Path) -> None:
+    repo = RecipeRepository(temp_db_path)
+    repo.upsert_recipe(_recipe("https://example.com/rezept-c/", "Rezept C"))
+    recipe_id = int(repo.list_recent(limit=1)[0]["id"])
+
+    repo.set_favorite(recipe_id, note="Originalnotiz")
+    repo.set_favorite(recipe_id, note=None)
+
+    detail = repo.get_recipe_by_id(recipe_id)
+    assert detail is not None
+    assert detail["is_favorite"] is True
+    assert detail["favorite_note"] == "Originalnotiz"

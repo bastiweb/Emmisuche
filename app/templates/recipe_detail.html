@@ -38,7 +38,7 @@
       <form method="post" action="/recipes/{{ recipe.id }}/favorite-note" class="note-form">
         <input type="hidden" name="next" value="/recipes/{{ recipe.id }}" />
         <label for="favorite-note"><strong>Persönliche Notiz</strong></label>
-        <textarea id="favorite-note" name="note" rows="4" placeholder="z. B. mehr Knoblauch, 5 Min länger köcheln...">{{ recipe.favorite_note or "" }}</textarea>
+        <textarea id="favorite-note" name="note" rows="4" placeholder="z. B. mehr Knoblauch, 5 Min länger köcheln...">{{- recipe.favorite_note or "" -}}</textarea>
         <button type="submit">Notiz speichern</button>
       </form>
     </section>

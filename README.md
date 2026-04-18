@@ -18,10 +18,12 @@ Dockerized FastAPI web app that crawls public recipe pages from `emmikochteinfac
 - Paginated search results
 - Recipe detail page with source attribution link and `last indexed at` metadata
 - Stale-content awareness (entries older than `CRAWLER_STALE_DAYS` are flagged)
+- Cache-aware reindex decisions with retry cooldowns and refetch throttling
 - CLI utilities for initial crawl, incremental reindex, and full reindex
 - Structured JSON logging for crawl/parse/index/search operations
 - One-command Docker startup with optional automatic reindex on boot
-- Local favorites with personal notes/comments (stored separately from scraped data)
+- Admin diagnostics pages (`/admin`, `/admin/index-status`) for completeness checks
+- Local favorites with personal notes/comments (stored separately from scraped data), editable inline
 - Tests for parser, search ranking behavior, and fixture integration flow
 
 ## Stack
@@ -42,7 +44,7 @@ Implemented constraints:
 - Respect `robots.txt` (`can_fetch`) and optional crawl-delay directives
 - Crawl politely using `CRAWLER_DELAY_SECONDS` and retries with backoff
 - Prefer relevant sitemap files via:
-  - `CRAWLER_INCLUDE_SITEMAP_KEYWORDS=post-sitemap,recipe-sitemap` by default
+  - `CRAWLER_INCLUDE_SITEMAP_KEYWORDS=post-sitemap,page-sitemap,recipe-sitemap` by default
 - Parse and index only pages containing JSON-LD Recipe objects
 - Do not index non-recipe pages
 - Store and display original source URL for every indexed recipe
@@ -78,7 +80,9 @@ Parser behavior is intentionally layered to improve quality and avoid page chrom
 │   ├── static
 │   │   └── style.css
 │   ├── templates
+│   │   ├── admin_status.html
 │   │   ├── base.html
+│   │   ├── favorites.html
 │   │   ├── index.html
 │   │   └── recipe_detail.html
 │   ├── config.py
@@ -95,7 +99,12 @@ Parser behavior is intentionally layered to improve quality and avoid page chrom
 │   │   └── sample_recipe_page.html
 │   ├── conftest.py
 │   ├── test_integration_fixture_flow.py
+│   ├── test_indexer_cache_behavior.py
+│   ├── test_favorites.py
 │   ├── test_parser.py
+│   ├── test_sitemap_discovery.py
+│   ├── test_storage_diagnostics.py
+│   ├── test_web_admin_and_favorites_routes.py
 │   └── test_search.py
 ├── .env.example
 ├── .gitignore
@@ -162,6 +171,10 @@ Important variables:
 - `CRAWLER_RETRY_JITTER_SECONDS`
 - `CRAWLER_RETRY_STATUS_CODES`
 - `CRAWLER_STALE_DAYS`
+- `CRAWLER_MIN_FETCH_INTERVAL_HOURS`
+- `CRAWLER_FAILURE_RETRY_HOURS`
+- `CRAWLER_NON_RECIPE_RECHECK_DAYS`
+- `CRAWLER_DISALLOWED_RECHECK_DAYS`
 - `CRAWLER_INCLUDE_SITEMAP_KEYWORDS`
 - `AUTO_REINDEX_ON_START`
 - `AUTO_REINDEX_LIMIT`
@@ -173,7 +186,7 @@ Important variables:
 pip install -r requirements.txt
 cp .env.example .env
 python scripts/manage.py crawl --limit 100
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8910
 ```
 
 Open: [http://localhost:8910](http://localhost:8910)
@@ -227,6 +240,16 @@ Diagnostics:
 python scripts/manage.py index-status
 ```
 
+Web diagnostics:
+
+- HTML dashboard: `/admin` (alias: `/admin/status`)
+- JSON diagnostics: `/admin/index-status`
+- Includes:
+  - crawl status breakdown (`indexed`, `non_recipe`, `fetch_failed`, `parse_failed`, `disallowed`, `new`)
+  - stale recipe count
+  - consistency checks (`indexed_without_recipe_total`, `recipe_without_state_total`)
+  - recent crawl/parse failures
+
 Optional flags:
 
 - `--limit N`
@@ -240,11 +263,25 @@ Optional flags:
 - Ranking uses weighted `bm25` with priority: title > ingredients > instructions > general body text
 - Results include snippet, optional image, and source URL
 
+## Cache and Stale Handling
+
+- Reindex decisions are made from persisted `crawl_state` metadata.
+- `reindex` fetches when one of these is true:
+  - URL has no useful cache state yet
+  - sitemap `lastmod` increased
+  - cached entry is stale by policy (`CRAWLER_STALE_DAYS` for indexed content)
+  - recent failure is outside retry cooldown (`CRAWLER_FAILURE_RETRY_HOURS`)
+- To avoid unnecessary refetch loops, recently fetched URLs are throttled by
+  `CRAWLER_MIN_FETCH_INTERVAL_HOURS` unless sitemap metadata indicates a change.
+- `reindex-all` always forces fetch/parse refresh.
+- URL cache lookup accepts trailing-slash variants to reduce duplicate fetches.
+
 ## Favorites and Notes
 
 - Favorite/unfavorite from recipe detail pages
 - Separate favorites page: `/favorites`
 - Optional personal note per favorite recipe
+- Notes can be edited inline on `/favorites` and from recipe detail
 - Notes are stored in `favorites.note` and are never mixed into scraped recipe source fields
 
 ## Testing
@@ -260,6 +297,9 @@ Coverage focus:
 - parser quality checks on saved real recipe fixtures
 - title-vs-body ranking behavior
 - integration-style fixture parse -> store -> search flow
+- cache skip/retry edge cases and forced refresh behavior
+- favorites + note persistence and route flows
+- diagnostics consistency checks
 
 ## Assumptions
 

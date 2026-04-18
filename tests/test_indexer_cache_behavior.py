@@ -31,6 +31,10 @@ def _settings(temp_db_path: Path) -> Settings:
         crawler_retry_status_codes=[429, 500],
         crawler_max_pages=0,
         crawler_stale_days=30,
+        crawler_min_fetch_interval_hours=6.0,
+        crawler_failure_retry_hours=12.0,
+        crawler_non_recipe_recheck_days=90,
+        crawler_disallowed_recheck_days=7,
         crawler_include_sitemap_keywords=[],
         crawler_include_url_keywords=[],
         crawler_allow_non_https=False,
@@ -107,3 +111,76 @@ def test_reindex_fetches_when_cached_entry_is_stale(temp_db_path: Path) -> None:
     )
     assert should_fetch is True
 
+
+def test_reindex_respects_failure_retry_cooldown(temp_db_path: Path) -> None:
+    settings = _settings(temp_db_path)
+    indexer = RecipeIndexer(settings=settings, repository=RecipeRepository(temp_db_path))
+
+    recent_failure = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    entry = SitemapUrlEntry(
+        url="https://example.com/recipe-a/",
+        lastmod="2026-04-10T00:00:00+00:00",
+    )
+    state = {
+        "index_status": "fetch_failed",
+        "last_fetched_at": recent_failure,
+        "sitemap_lastmod": "2026-04-10T00:00:00+00:00",
+    }
+
+    should_fetch = indexer._should_fetch_url(  # noqa: SLF001 - explicit behavior test
+        mode="reindex",
+        entry=entry,
+        crawl_state=state,
+        stale_days=30,
+    )
+    assert should_fetch is False
+
+
+def test_reindex_retries_failure_after_cooldown(temp_db_path: Path) -> None:
+    settings = _settings(temp_db_path)
+    indexer = RecipeIndexer(settings=settings, repository=RecipeRepository(temp_db_path))
+
+    old_failure = (datetime.now(UTC) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    entry = SitemapUrlEntry(
+        url="https://example.com/recipe-a/",
+        lastmod="2026-04-10T00:00:00+00:00",
+    )
+    state = {
+        "index_status": "fetch_failed",
+        "last_fetched_at": old_failure,
+        "sitemap_lastmod": "2026-04-10T00:00:00+00:00",
+    }
+
+    should_fetch = indexer._should_fetch_url(  # noqa: SLF001 - explicit behavior test
+        mode="reindex",
+        entry=entry,
+        crawl_state=state,
+        stale_days=30,
+    )
+    assert should_fetch is True
+
+
+def test_reindex_skips_stale_when_recently_fetched(temp_db_path: Path) -> None:
+    settings = _settings(temp_db_path)
+    indexer = RecipeIndexer(settings=settings, repository=RecipeRepository(temp_db_path))
+
+    stale_parsed = (datetime.now(UTC) - timedelta(days=60)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    fresh_fetch = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    entry = SitemapUrlEntry(
+        url="https://example.com/recipe-a/",
+        lastmod="2026-04-10T00:00:00+00:00",
+    )
+    state = {
+        "index_status": "indexed",
+        "last_parsed_at": stale_parsed,
+        "last_fetched_at": fresh_fetch,
+        "sitemap_lastmod": "2026-04-10T00:00:00+00:00",
+    }
+
+    should_fetch = indexer._should_fetch_url(  # noqa: SLF001 - explicit behavior test
+        mode="reindex",
+        entry=entry,
+        crawl_state=state,
+        stale_days=30,
+    )
+    assert should_fetch is False

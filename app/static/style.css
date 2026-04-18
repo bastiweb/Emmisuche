@@ -394,6 +394,13 @@ a {
   margin: 0.15rem 0;
 }
 
+.empty-state-card {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fffdf9;
+}
+
 @media (max-width: 680px) {
   .result-card {
     grid-template-columns: 1fr;

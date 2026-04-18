@@ -152,9 +152,25 @@ def main() -> int:
         print(f"Crawl state rows : {diagnostics['total_crawl_state']}")
         print(f"Last indexed at  : {diagnostics['last_indexed_at']}")
         print(f"Stale recipes    : {diagnostics['stale_recipes']}")
+        print(f"Coverage (%)     : {diagnostics['coverage_percent']}")
+        print(f"Indexed rows     : {diagnostics['indexed_state_total']}")
+        print(f"Fetch failed     : {diagnostics['fetch_failed_state_total']}")
+        print(f"Parse failed     : {diagnostics['parse_failed_state_total']}")
+        print(f"Pending          : {diagnostics['pending_state_total']}")
+        print(f"Indexed w/o row  : {diagnostics['indexed_without_recipe_total']}")
+        print(f"Recipes w/o state: {diagnostics['recipe_without_state_total']}")
         print("Status breakdown :")
         for status, count in diagnostics["status_breakdown"].items():
             print(f"  - {status}: {count}")
+        if diagnostics["recent_failures"]:
+            print("Recent failures  :")
+            for item in diagnostics["recent_failures"][:5]:
+                error_text = (item.get("last_error") or "").strip()
+                if len(error_text) > 120:
+                    error_text = f"{error_text[:117]}..."
+                print(
+                    f"  - {item.get('index_status')} | {item.get('source_url')} | {error_text}"
+                )
         return 0
     if args.command == "crawl":
         return run_index(mode="initial", limit=args.limit)

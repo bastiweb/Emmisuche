@@ -26,6 +26,9 @@
                   {{ item.source_url }}
                 </a>
               </p>
+              {% if item.favorite_updated_at %}
+                <p class="source">Notiz zuletzt geändert: {{ item.favorite_updated_at }}</p>
+              {% endif %}
 
               <form method="post" action="/recipes/{{ item.id }}/favorite-note" class="note-form compact-note-form">
                 <input type="hidden" name="next" value="/favorites" />
@@ -35,7 +38,7 @@
                   name="note"
                   rows="3"
                   placeholder="z. B. Salz reduzieren, 3 Minuten länger garen..."
-                >{{ item.note or "" }}</textarea>
+                >{{- item.note or "" -}}</textarea>
                 <div class="favorite-actions">
                   <button type="submit">Notiz speichern</button>
                   <a href="/recipes/{{ item.id }}" class="text-link">Rezept öffnen</a>
@@ -52,7 +55,11 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p>Noch keine Favoriten gespeichert.</p>
+      <div class="empty-state-card">
+        <p>Noch keine Favoriten gespeichert.</p>
+        <p class="source">Markiere Rezepte in der Detailansicht als Favorit, um hier persönliche Notizen zu führen.</p>
+        <p><a href="/" class="text-link">Zur Suche</a></p>
+      </div>
     {% endif %}
   </section>
 {% endblock %}
