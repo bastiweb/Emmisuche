@@ -1,0 +1,55 @@
+[Unit]
+Description=Emmi recipe search web application
+Documentation=file:/opt/emmisuche/deploy/debian/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=emmisuche
+Group=emmisuche
+WorkingDirectory=/opt/emmisuche
+EnvironmentFile=/etc/emmisuche/emmisuche.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+ExecStartPre=/opt/emmisuche/.venv/bin/python /opt/emmisuche/scripts/manage.py init-db
+ExecStart=/opt/emmisuche/.venv/bin/uvicorn app.main:app --host ${HOST} --port ${PORT}
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGINT
+UMask=0027
+StateDirectory=emmisuche
+StateDirectoryMode=0750
+LogsDirectory=emmisuche
+LogsDirectoryMode=0750
+
+# Writable paths are intentionally narrow. The app code remains root-owned.
+ReadWritePaths=/var/lib/emmisuche /var/log/emmisuche
+
+# systemd sandboxing and privilege reduction.
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+CapabilityBoundingSet=
+AmbientCapabilities=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target

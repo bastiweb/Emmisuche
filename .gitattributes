@@ -1,0 +1,4 @@
+deploy/debian/*.sh text eol=lf
+deploy/debian/*.service text eol=lf
+deploy/debian/*.cron text eol=lf
+deploy/debian/*.conf text eol=lf

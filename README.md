@@ -202,6 +202,21 @@ docker compose up -d --build
 
 Open: [http://localhost:8910](http://localhost:8910)
 
+## Debian Server Run (without Docker)
+
+A production-oriented Debian deployment is available in `deploy/debian`. It
+installs the app into a Python virtual environment under `/opt/emmisuche`, runs
+the web service with a hardened systemd unit, stores SQLite data under
+`/var/lib/emmisuche`, and installs a cron job that reindexes every night at
+01:00.
+
+```bash
+sudo deploy/debian/install.sh
+```
+
+See `deploy/debian/README.md` for the environment file, reverse-proxy example,
+and security details.
+
 ## CLI Utilities
 
 Initial crawl (missing only):
