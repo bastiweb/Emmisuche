@@ -21,7 +21,7 @@ Dockerized FastAPI web app that crawls public recipe pages from `emmikochteinfac
 - Cache-aware reindex decisions with retry cooldowns and refetch throttling
 - CLI utilities for initial crawl, incremental reindex, and full reindex
 - Structured JSON logging for crawl/parse/index/search operations
-- One-command Docker startup with optional automatic reindex on boot
+- One-command Docker startup with automatic daily reindex at 01:00
 - Admin diagnostics pages (`/admin`, `/admin/index-status`) for completeness checks
 - Local favorites with personal notes/comments (stored separately from scraped data), editable inline
 - Tests for parser, search ranking behavior, and fixture integration flow
@@ -161,6 +161,7 @@ cp .env.example .env
 Important variables:
 
 - `DATABASE_PATH` (default `./data/recipes.db`)
+- `TZ` (default `Europe/Berlin`, used for daily 01:00 reindex scheduling in Docker)
 - `SITEMAP_INDEX_URL`
 - `ALLOWED_DOMAIN`
 - `CRAWLER_DELAY_SECONDS`
@@ -198,7 +199,9 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-`docker compose up -d --build` starts the app and (by default) runs a startup reindex with `AUTO_REINDEX_LIMIT`.
+`docker compose up -d --build` starts the app, schedules `reindex` daily at 01:00
+container local time (`TZ`), and (optionally) can run startup reindex depending on
+`AUTO_REINDEX_ON_START` (default: `false`).
 
 Open: [http://localhost:8910](http://localhost:8910)
 
